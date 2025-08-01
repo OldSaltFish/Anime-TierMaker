@@ -1,0 +1,27 @@
+{
+  "name": "mikan-tierMaker",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "rsbuild build",
+    "dev": "rsbuild dev --open",
+    "preview": "rsbuild preview"
+  },
+  "devDependencies": {
+    "@rsbuild/core": "^1.4.11",
+    "@rsbuild/plugin-babel": "^1.0.5",
+    "@rsbuild/plugin-solid": "^1.0.5",
+    "@types/file-saver": "^2.0.7",
+    "@unocss/preset-wind4": "^66.3.3",
+    "@unocss/webpack": "^66.3.3",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "@solid-primitives/media": "^2.3.3",
+    "file-saver": "^2.0.5",
+    "html2canvas-pro": "^1.5.11",
+    "jszip": "^3.10.1",
+    "solid-js": "^1.9.7"
+  }
+}
