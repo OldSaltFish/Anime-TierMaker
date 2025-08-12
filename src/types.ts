@@ -3,7 +3,8 @@ export interface Bangumi {
   id: string;
   title: string;
   coverBase64: string;
-  // 可以添加更多字段，如评分、季度等
+  rating?: number; // 评分，0-5分
+  // 可以添加更多字段，如季度等
 }
 
 // 梯度类型

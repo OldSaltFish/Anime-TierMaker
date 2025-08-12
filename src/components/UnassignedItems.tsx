@@ -57,16 +57,6 @@ export const UnassignedItems: Component<UnassignedItemsProps> = (props) => {
         }
       }
 
-      // 如果找到了最近的项目，更新占位元素位置
-      if (closestItem) {
-        const placeholder = document.querySelector('.bangumi-placeholder') as HTMLElement;
-        if (placeholder) {
-          const rect = closestItem.getBoundingClientRect();
-          placeholder.style.left = `${rect.left}px`;
-          placeholder.style.top = `${rect.top}px`;
-        }
-      }
-
       props.onDrop(data.id, data.sourceContainerId, 'unassigned', targetIndex);
     } else {
       props.onDrop(data.id, data.sourceContainerId, 'unassigned');

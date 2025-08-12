@@ -19,16 +19,10 @@ interface TierRowProps {
 export const TierRow: Component<TierRowProps> = (props) => {
   const [editName, setEditName] = createSignal(props.tier.name);
 
-  const handleDragOver = (e: DragEvent) => {
-    e.preventDefault();
-    e.dataTransfer!.dropEffect = 'move';
-  };
+
 
   const handleDrop = (e: DragEvent) => {
-    console.log('handleDrop');
-    
     e.preventDefault();
-    
     // 安全解析JSON数据
     let data;
     try {
@@ -66,7 +60,7 @@ export const TierRow: Component<TierRowProps> = (props) => {
       // 找到最近的项目
       for (let i = 0; i < items.length; i++) {
         const item = items[i] as HTMLElement;
-        if (item.getAttribute('data-id') === data.id) continue; // 跳过自己
+        if (item.getAttribute('data-id') === data.id) continue; // 跳过自己(比如说虚影)
 
         const rect = item.getBoundingClientRect();
         const itemCenterX = rect.left + rect.width / 2;
@@ -92,15 +86,6 @@ export const TierRow: Component<TierRowProps> = (props) => {
         }
       }
 
-      // 如果找到了最近的项目，更新占位元素位置
-      if (closestItem) {
-        const placeholder = document.querySelector('.bangumi-placeholder') as HTMLElement;
-        if (placeholder) {
-          const rect = closestItem.getBoundingClientRect();
-          placeholder.style.left = `${rect.left}px`;
-          placeholder.style.top = `${rect.top}px`;
-        }
-      }
 
       props.onDrop(data.id, data.sourceContainerId, props.tier.id, targetIndex);
     } else {
@@ -235,7 +220,7 @@ export const TierRow: Component<TierRowProps> = (props) => {
       </div>
       <div
         class={`flex flex-wrap min-h-128px bg-gray-800 ${props.isWideScreen ? 'flex-1' : 'w-full'}`}
-        onDragOver={handleDragOver}
+        onDragOver={e=>e.preventDefault()}
         onDrop={handleDrop}
         data-container-id={props.tier.id}
         onDragEnter={(e) => {

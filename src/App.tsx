@@ -1,12 +1,11 @@
 import { createSignal, For, Show } from 'solid-js';
 import './App.css';
-import type { AppState, Bangumi, BangumiData, Tier } from './types';
+import type { AppState, Bangumi, Tier } from './types';
 import { TierRow } from './components/TierRow';
 import { UnassignedItems } from './components/UnassignedItems';
 import { ImportExport } from './components/ImportExport';
 import { AddBangumiModal } from './components/AddBangumiModal';
 import { createMediaQuery } from '@solid-primitives/media';
-
 // 默认的梯度配置 - 使用更柔和的暗色配色
 const defaultTiers: Tier[] = [
   { id: 'tier-s', name: 'S', color: '#FC7D82', items: [] }, // 暗红色
@@ -14,7 +13,7 @@ const defaultTiers: Tier[] = [
   { id: 'tier-b', name: 'B', color: '#FBFF82', items: [] }, // 暗黄色
   { id: 'tier-c', name: 'C', color: '#FCC082', items: [] }, // 暗绿色
   { id: 'tier-d', name: 'D', color: '#FBE182', items: [] }, // 暗蓝色
-  // { id: 'tier-f', name: 'F', color: '#6a1b9a', items: [] }, // 暗紫色
+  { id: 'tier-f', name: 'F', color: '#6a1b9a', items: [] }, // 暗紫色
 ];
 
 // 移除预设配色方案
@@ -33,24 +32,49 @@ const App = () => {
 
   // 悬浮按钮展开状态
   const [isFloatingMenuExpanded, setIsFloatingMenuExpanded] = createSignal(false);
-  
+
   // 悬浮按钮位置状态
   const [floatingMenuPosition, setFloatingMenuPosition] = createSignal({
     right: '1rem',
     bottom: '33%'
   });
-  
+
   // 添加番剧模态框状态
   const [isAddBangumiModalOpen, setIsAddBangumiModalOpen] = createSignal(false);
 
   // 处理导入数据
-  const handleImport = (data: BangumiData) => {
-    setState(prev => ({
-      ...prev,
-      unassignedItems: data.bangumis,
-      // 重置所有梯度的项目
-      tiers: prev.tiers.map(tier => ({ ...tier, items: [] })),
-    }));
+  const handleImport = (data: Bangumi[]) => {
+    setState(prev => {
+      // 创建新的 tiers 数组，每个 tier 的 items 初始为空
+      const newTiers = prev.tiers.map(tier => ({ ...tier, items: [] as Bangumi[] }));
+      
+      // 根据评分分配番剧到对应的梯度
+      const unassignedItems: Bangumi[] = [];
+      
+      data.forEach(bangumi => {
+        // 如果有评分且评分在有效范围内（0-5）
+        if (bangumi.rating !== undefined && bangumi.rating >= 0 && bangumi.rating <= 5) {
+          // 计算对应的 tier 索引（反向对应：rating 5 -> index 0, rating 0 -> index 5）
+          const tierIndex = 5 - bangumi.rating;
+          
+          // 确保索引在有效范围内
+          if (tierIndex >= 0 && tierIndex < newTiers.length) {
+            newTiers[tierIndex].items.push(bangumi);
+          } else {
+            unassignedItems.push(bangumi);
+          }
+        } else {
+          // 没有评分或评分超出范围的番剧放入未分配区域
+          unassignedItems.push(bangumi);
+        }
+      });
+      
+      return {
+        ...prev,
+        unassignedItems,
+        tiers: newTiers,
+      }
+    });
   };
 
   // 处理拖放
@@ -69,6 +93,23 @@ const App = () => {
       }
 
       if (!item) return prev;
+
+      // 创建项目的副本，以便更新评分
+      const updatedItem = { ...item };
+      
+      // 如果目标容器是某个梯度，更新番剧的评分
+      if (targetContainerId !== 'unassigned') {
+        // 找到目标梯度的索引
+        const targetTierIndex = prev.tiers.findIndex(t => t.id === targetContainerId);
+        if (targetTierIndex !== -1) {
+          // 根据梯度索引反向计算评分（索引 0 -> 评分 5，索引 5 -> 评分 0）
+          updatedItem.rating = 5 - targetTierIndex;
+        }
+      } else {
+        // 如果拖到未分配区域，可以选择保留或重置评分
+        // 这里选择保留评分，如果需要重置可以取消注释下一行
+        // updatedItem.rating = undefined;
+      }
 
       // 从源容器中移除项目
       let updatedState = { ...prev };
@@ -92,10 +133,10 @@ const App = () => {
         if (targetIndex !== undefined) {
           // 插入到指定位置
           const newItems = [...updatedState.unassignedItems];
-          newItems.splice(targetIndex, 0, item);
+          newItems.splice(targetIndex, 0, updatedItem);
           updatedState.unassignedItems = newItems;
         } else {
-          updatedState.unassignedItems = [...updatedState.unassignedItems, item];
+          updatedState.unassignedItems = [...updatedState.unassignedItems, updatedItem];
         }
       } else {
         updatedState.tiers = updatedState.tiers.map(tier => {
@@ -103,7 +144,7 @@ const App = () => {
             if (targetIndex !== undefined) {
               // 插入到指定位置
               const newItems = [...tier.items];
-              newItems.splice(targetIndex, 0, item!);
+              newItems.splice(targetIndex, 0, updatedItem);
               return {
                 ...tier,
                 items: newItems
@@ -111,7 +152,7 @@ const App = () => {
             } else {
               return {
                 ...tier,
-                items: [...tier.items, item!]
+                items: [...tier.items, updatedItem]
               };
             }
           }
@@ -248,19 +289,19 @@ const App = () => {
       unassignedItems: [...prev.unassignedItems, newBangumi]
     }));
   };
-  
+
   // 处理删除番剧
   const handleDeleteBangumi = (id: string) => {
     setState(prev => {
       // 从未分类区域删除
       const updatedUnassigned = prev.unassignedItems.filter(item => item.id !== id);
-      
+
       // 从所有梯度中删除
       const updatedTiers = prev.tiers.map(tier => ({
         ...tier,
         items: tier.items.filter(item => item.id !== id)
       }));
-      
+
       return {
         ...prev,
         unassignedItems: updatedUnassigned,
@@ -277,14 +318,14 @@ const App = () => {
       </div>
 
       {/* 悬浮按钮 */}
-      <div 
+      <div
         class="fixed z-50"
         style={{
           right: floatingMenuPosition().right,
           bottom: floatingMenuPosition().bottom
         }}
       >
-        <div 
+        <div
           class="flex flex-col items-end gap-2 floating-menu-container"
           style={{ cursor: 'move' }}
         >
@@ -316,7 +357,7 @@ const App = () => {
           >
             {isFloatingMenuExpanded() ? "×" : "≡"}
           </button>
-          
+
           {/* 添加番剧按钮 */}
           <button
             onClick={() => setIsAddBangumiModalOpen(true)}

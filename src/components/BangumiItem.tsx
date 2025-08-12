@@ -42,16 +42,6 @@ export const BangumiItem: Component<BangumiItemProps> = (props) => {
     setTimeout(() => {
       target.classList.add('dragging');
     }, 0);
-    
-    // 创建一个半透明的占位元素，显示可能的落点
-    // const placeholder = document.createElement('div');
-    // placeholder.className = 'bangumi-placeholder';
-    // placeholder.style.width = `${rect.width}px`;
-    // placeholder.style.height = `${rect.height}px`;
-    // placeholder.setAttribute('data-placeholder-for', props.item.id);
-    // document.body.appendChild(placeholder);
-    
-    // 使用自定义属性存储占位元素引用，以便在拖动结束时移除
     target.dataset.hasPlaceholder = 'true';
   };
   
@@ -63,15 +53,6 @@ export const BangumiItem: Component<BangumiItemProps> = (props) => {
     // 移除拖动时的视觉效果
     const target = e.currentTarget;
     target.classList.remove('dragging');
-    
-    // 移除占位元素
-    if (target.dataset.hasPlaceholder === 'true') {
-      const placeholder = document.querySelector(`.bangumi-placeholder[data-placeholder-for="${props.item.id}"]`);
-      if (placeholder && placeholder.parentNode) {
-        placeholder.parentNode.removeChild(placeholder);
-      }
-      delete target.dataset.hasPlaceholder;
-    }
   };
 
   // 默认的占位符图像

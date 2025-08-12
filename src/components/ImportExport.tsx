@@ -1,11 +1,11 @@
 import { type Component, createSignal } from 'solid-js';
-import type { BangumiData, Tier } from '../types';
+import type { Bangumi, BangumiData, Tier } from '../types';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
-import html2canvas from 'html2canvas';
+import html2canvas from 'html2canvas-pro';
 
 interface ImportExportProps {
-  onImport: (data: BangumiData) => void;
+  onImport: (data: Bangumi[]) => void;
   tiers: Tier[];
 }
 
@@ -23,20 +23,14 @@ export const ImportExport: Component<ImportExportProps> = (props) => {
 
     try {
       const text = await file.text();
-      const data = JSON.parse(text) as BangumiData;
-
+      let data = JSON.parse(text) as Bangumi[];
       // 验证数据格式
-      if (!data.bangumis || !Array.isArray(data.bangumis)) {
+      if (!data || !Array.isArray(data)) {
         throw new Error('无效的数据格式：缺少bangumis数组');
       }
-
-      // 验证每个番剧项目
-      for (const bangumi of data.bangumis) {
-        if (!bangumi.id || !bangumi.title || !bangumi.coverBase64) {
-          throw new Error('无效的番剧数据：缺少必要字段');
-        }
-      }
-
+      data = data.filter(bangumi => {
+        return bangumi.id && bangumi.title && bangumi.coverBase64
+      })
       props.onImport(data);
       setError(null);
 
