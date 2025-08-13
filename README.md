@@ -3,6 +3,5 @@
 
 
 ```shell
-rimraf favicon.ico index.html static/
-mv dist/* ./
+rimraf favicon.ico index.html static/ && mv dist/* ./
 ```
